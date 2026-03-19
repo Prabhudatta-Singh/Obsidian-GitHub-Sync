@@ -92,12 +92,17 @@ export default class GHSyncPlugin extends Plugin {
 
 		// git pull origin main
 	    try {
-	    	//@ts-ignore
-	    	await git.pull('origin', 'main', { '--no-rebase': null }, (err, update) => {
-	      		if (update) {
-					new Notice("GitHub Sync: Pulled " + update.summary.changes + " changes");
-	      		}
-	   		})
+		    // 1. Get the current branch name automatically
+		    const branchInfo = await git.branchLocal();
+		    const currentBranch = branchInfo.current;
+		
+		    // 2. Use that name in the pull command
+		    //@ts-ignore
+		    await git.pull('origin', currentBranch, { '--no-rebase': null }, (err, update) => {
+		        if (update) {
+		            new Notice(`GitHub Sync: Pulled ${update.summary.changes} changes from ${currentBranch}`);
+		        }
+		    });
 	    } catch (e) {
 	    	let conflictStatus = await git.status().catch((e) => { new Notice(e, 10000); return; });
     		let conflictMsg = "Merge conflicts in:";
